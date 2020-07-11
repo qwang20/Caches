@@ -1,0 +1,1 @@
+curl -F "image=@./data/morning.jpg" localhost:3000/upload

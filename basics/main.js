@@ -7,16 +7,22 @@ const fs = require('fs');
 // REDIS
 const redis = require('redis');
 let client = redis.createClient(6379, '127.0.0.1', {});
-
+let routerList = '';
 ///////////// GLOBAL HOOK
 
 // Add hook to make it easier to get all visited URLS.
 app.use(function (req, res, next) {
   console.log(req.method, req.url);
-
   // Task 2 ... INSERT HERE.
   // TODO: Store recent routes
-
+  client.lpush('list', req.method.concat(' ', req.url));
+  client.ltrim('list', 0, 4);
+  client.lrange('list', 0, 4, (err, data) => {
+  if (err) {
+    console.log(err);
+    return;
+  }
+  });
   next(); // Passing the request to the next handler in the stack.
 });
 
@@ -35,14 +41,46 @@ app.get('/test', function (req, res) {
 
 // Task 1 ===========================================
 
-// TODO: Create two routes, `/get` and `/set`.
+
+// Create two routes, `/get` and `/set`.
+app.get('/set', function (req, res) {
+  client.set("key", "this message will self-destruct in 10 seconds", function(err, reply) {
+	console.log(reply);
+  });
+  client.expire("key", 10);
+  res.writeHead(200, { 'content-type': 'text/html' });
+  res.write('set');
+  res.end();
+})
+
+app.get('/get', function (req, res) {
+  client.get('key', function(err, reply) {
+    console.log(reply);
+	res.send(reply);
+	res.end();
+  });
+})
+
 
 // ===================================================
 
 
 // Task 2 ============================================
 
-// TODO: Create a new route, `/recent`
+// Create a new route, `/recent`
+app.get('/recent', function (req, res) {
+  client.lrange('list', 0, 4, (err, data) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    res.send(data);
+	res.end();
+    data.forEach(router => {
+      console.log(router)
+    });
+  });
+})
 
 // ===================================================
 

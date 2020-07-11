@@ -1,0 +1,1 @@
+curl -F "image=@./data/i-scream.jpg" localhost:3000/upload
